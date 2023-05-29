@@ -1,5 +1,5 @@
 MODELS = "Models"
-
+WORD_COUNTS="Predictions"
 
 SIDEBAR_STYLE = {
     "position": "fixed",

@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from dash_bootstrap_templates import load_figure_template
 
-from constants import MODELS, SIDEBAR_STYLE, WORD_COUNTS
+from constants import *
 import os
 from datetime import date
 
@@ -43,6 +43,7 @@ sidebar = html.Div(
                     options=[
                         {"label": MODELS, "value": MODELS},
                         {"label": WORD_COUNTS, "value": WORD_COUNTS},
+                        {"label": TOPIC, "value": TOPIC},
                     ],
                     placeholder="Select a type of research",
                     value=MODELS,
@@ -50,7 +51,7 @@ sidebar = html.Div(
                 html.Br(),
                 dcc.Dropdown(
                     id="filter",
-                    placeholder="Select a Models or Techniques",
+                    placeholder="Select a filter",
                     value="all",
                 ),
                 # html.Br(),
@@ -89,11 +90,13 @@ def change_dropdown(type_of_research):
             {"label": "Mislabeled predictions", "value": "from_mislabeled_classes"},
             {"label": "All", "value": "all"},
         ]
+    if type_of_research == TOPIC:
+        return [{"label": f"TOPIC_{x}", "value": f"TOPIC_{x}"} for x in range(5)]
 
 
 def get_f1_plot(filter, fig):
-    search_filter=filter
-    if filter=="all":
+    search_filter = filter
+    if filter == "all":
         search_filter = ""
     data_to_plot = f_1_data[f_1_data["name-method"].str.contains(str(search_filter))]
     fig.add_bar(x=data_to_plot["name-method"], y=data_to_plot["f1-score-weighted"])
@@ -177,6 +180,35 @@ def get_common_words_plot(filter, fig):
     # print(fig)
     return fig
 
+def get_topic(filter, fig):
+    if str(filter) == "all":
+        filter = "TOPIC_0"
+    
+    data_to_plot = STR_TO_TOPIC[filter]
+    fig.add_bar(x= [key for key in data_to_plot], y= [value for value in data_to_plot.values()])
+    
+    title = filter
+
+    fig.update_layout(
+        title={
+            "text": title,
+            "y": 0.9,
+            "x": 0.5,
+            "xanchor": "center",
+            "yanchor": "top",
+        },
+        yaxis_title="Probability",
+        xaxis_title="Topic",
+        # legend_title="Legend Title",
+        font=dict(
+            # family="Courier New, monospace",
+            size=14,
+            # color="RebeccaPurple"
+        ),
+    )
+    return fig
+
+
 
 @app.callback(
     Output("output", "figure"),
@@ -190,6 +222,8 @@ def plot_data(filter, type_of_research):
         fig = get_f1_plot(filter, fig)
     elif str(type_of_research) == WORD_COUNTS:
         fig = get_common_words_plot(filter, fig)
+    elif str(type_of_research) == TOPIC:
+        fig = get_topic(filter, fig)
 
     # print(fig)
     fig.layout.template = "simple_white"
@@ -265,7 +299,8 @@ app.layout = html.Div(
                                                             "Dataset Name: Amazon Fine Foods reviews"
                                                         ),
                                                         html.Li(
-                                                            "Last Updated: "+str(today)
+                                                            "Last Updated: "
+                                                            + str(today)
                                                         ),
                                                         html.Li(
                                                             [

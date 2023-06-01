@@ -8,6 +8,9 @@ from dash_bootstrap_templates import load_figure_template
 
 from constants import MODELS, SIDEBAR_STYLE, WORD_COUNTS
 import os
+from datetime import date
+
+today = date.today()
 
 load_figure_template("LUX")
 
@@ -42,9 +45,14 @@ sidebar = html.Div(
                         {"label": WORD_COUNTS, "value": WORD_COUNTS},
                     ],
                     placeholder="Select a type of research",
+                    value=MODELS,
                 ),
                 html.Br(),
-                dcc.Dropdown(id="filter"),
+                dcc.Dropdown(
+                    id="filter",
+                    placeholder="Select a Models or Techniques",
+                    value="all",
+                ),
                 # html.Br(),
                 # dbc.Button("Add Chart", id="button"),
             ],
@@ -73,7 +81,7 @@ def change_dropdown(type_of_research):
             {"label": "Bag-of-words", "value": "BoW"},
             {"label": "Word2vec", "value": "W2V"},
             {"label": "DistilBERT", "value": "DB"},
-            {"label": "All", "value": ""},
+            {"label": "All", "value": "all"},
         ]
     if type_of_research == WORD_COUNTS:
         return [
@@ -84,13 +92,16 @@ def change_dropdown(type_of_research):
 
 
 def get_f1_plot(filter, fig):
-    data_to_plot = f_1_data[f_1_data["name-method"].str.contains(str(filter))]
+    search_filter=filter
+    if filter=="all":
+        search_filter = ""
+    data_to_plot = f_1_data[f_1_data["name-method"].str.contains(str(search_filter))]
     fig.add_bar(x=data_to_plot["name-method"], y=data_to_plot["f1-score-weighted"])
 
-    if filter == "":
+    if filter == "all":
         title = "F1-score-weighted for all models"
     elif filter is not None:
-        title = f"F1-score-weighted for models based on {filter}"
+        title = f"F1-score-weighted - {filter}"
     else:
         title = ""
 
@@ -118,7 +129,9 @@ def get_common_words_plot(filter, fig):
     if str(filter) == "all":
         words = common_words_df.word.tolist()
 
-        number_from_mislabeled_classes = common_words_df.from_mislabeled_classes.tolist()
+        number_from_mislabeled_classes = (
+            common_words_df.from_mislabeled_classes.tolist()
+        )
         number_from_confident_classes = common_words_df.from_confident_classes.tolist()
         title = "Most common words from mislabeled and confident predictions"
         fig.add_trace(
@@ -249,23 +262,17 @@ app.layout = html.Div(
                                                     [
                                                         html.Br(),
                                                         html.Li(
-                                                            "Number of Economies: 170"
+                                                            "Dataset Name: Amazon Fine Foods reviews"
                                                         ),
                                                         html.Li(
-                                                            "Temporal Coverage: 1974 - 2019"
-                                                        ),
-                                                        html.Li(
-                                                            "Update Frequency: Quarterly"
-                                                        ),
-                                                        html.Li(
-                                                            "Last Updated: March 18, 2020"
+                                                            "Last Updated: "+str(today)
                                                         ),
                                                         html.Li(
                                                             [
                                                                 "Source: ",
                                                                 html.A(
-                                                                    "https://datacatalog.worldbank.org/dataset/poverty-and-equity-database",
-                                                                    href="https://datacatalog.worldbank.org/dataset/poverty-and-equity-database",
+                                                                    "https://snap.stanford.edu/data/web-FineFoods.html",
+                                                                    href="https://snap.stanford.edu/data/web-FineFoods.html",
                                                                 ),
                                                             ]
                                                         ),

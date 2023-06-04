@@ -70,8 +70,20 @@ common_words_df = pd.read_csv(os.path.join(subdir, "common_words_df.csv"))
 
 dict_of_data = {MODELS: f_1_data, WORD_COUNTS: common_words_df}
 
-# ---------------------------------- HELPERS
 
+dict_name={
+    "BoW": "Bag-of-words",
+    "W2V": "Word2vec",
+    "DB": "DistilBERT - BASE"
+    }
+
+
+
+################################################################
+#                                                              #
+#                           callback                           #
+#                                                              #
+################################################################
 
 @app.callback(Output("filter", "options"), Input("Type_of_research", "value"))
 def change_dropdown(type_of_research):
@@ -94,6 +106,61 @@ def change_dropdown(type_of_research):
         return [{"label": f"TOPIC_{x}", "value": f"TOPIC_{x}"} for x in range(5)]
 
 
+
+
+@app.callback(
+    Output("output", "figure"),
+    Input("filter", "value"),
+    Input("Type_of_research", "value"),
+)
+def plot_data(filter, type_of_research):
+    fig = go.Figure()
+
+    print(filter, type_of_research)
+    try:
+        if str(type_of_research) == MODELS:
+            fig = get_f1_plot(filter, fig)
+        elif str(type_of_research) == WORD_COUNTS:
+            fig = get_common_words_plot(filter, fig)
+        elif str(type_of_research) == TOPIC:
+            fig = get_topic(filter, fig)
+    except:
+        if str(type_of_research) == MODELS:
+            fig = get_f1_plot("all", fig)
+        elif str(type_of_research) == WORD_COUNTS:
+            fig = get_common_words_plot("all", fig)
+        elif str(type_of_research) == TOPIC:
+            fig = get_topic("TOPIC_0", fig)
+    finally:
+        # print(fig)
+        fig.layout.template = "simple_white"
+        fig.update_layout(
+            title={
+                "y": 0.9,
+                "x": 0.5,
+                "xanchor": "center",
+                "yanchor": "top",
+            },
+            xaxis_tickfont_size=14,
+            yaxis=dict(
+                titlefont_size=16,
+                tickfont_size=14,
+            ),
+            font=dict(
+                size=14,
+            ),
+        )
+        return fig
+
+
+
+
+################################################################
+#                                                              #
+#                           methods                            #
+#                                                              #
+################################################################
+
 def get_f1_plot(filter, fig):
     search_filter = filter
     if filter == "all":
@@ -104,7 +171,7 @@ def get_f1_plot(filter, fig):
     if filter == "all":
         title = "F1-score-weighted for all models"
     elif filter is not None:
-        title = f"F1-score-weighted - {filter}"
+        title = f"F1-score-weighted with {dict_name[filter]}"
     else:
         title = ""
 
@@ -125,6 +192,7 @@ def get_f1_plot(filter, fig):
             # color="RebeccaPurple"
         ),
     )
+    # print(fig)
     return fig
 
 
@@ -187,7 +255,7 @@ def get_topic(filter, fig):
     data_to_plot = STR_TO_TOPIC[filter]
     fig.add_bar(x= [key for key in data_to_plot], y= [value for value in data_to_plot.values()])
     
-    title = filter
+    title = "TOPIC N." + filter[-1]
 
     fig.update_layout(
         title={
@@ -208,45 +276,6 @@ def get_topic(filter, fig):
     )
     return fig
 
-
-
-@app.callback(
-    Output("output", "figure"),
-    Input("filter", "value"),
-    Input("Type_of_research", "value"),
-)
-def plot_data(filter, type_of_research):
-    fig = go.Figure()
-
-    if str(type_of_research) == MODELS:
-        fig = get_f1_plot(filter, fig)
-    elif str(type_of_research) == WORD_COUNTS:
-        fig = get_common_words_plot(filter, fig)
-    elif str(type_of_research) == TOPIC:
-        fig = get_topic(filter, fig)
-
-    # print(fig)
-    fig.layout.template = "simple_white"
-    fig.update_layout(
-        title={
-            "y": 0.9,
-            "x": 0.5,
-            "xanchor": "center",
-            "yanchor": "top",
-        },
-        xaxis_tickfont_size=14,
-        yaxis=dict(
-            titlefont_size=16,
-            tickfont_size=14,
-        ),
-        font=dict(
-            size=14,
-        ),
-    )
-    return fig
-
-
-# ---------------------------------------
 
 
 # ----------------------- DASH APP -----------------------
@@ -296,13 +325,12 @@ app.layout = html.Div(
                                                     [
                                                         html.Br(),
                                                         html.Li(
+                                                            "Author: Mario Avolio"
+                                                        ),
+                                                        html.Li(
                                                             "Dataset Name: Amazon Fine Foods reviews"
                                                         ),
-                                                        html.Li(
-                                                            "Last Updated: "
-                                                            + str(today)
-                                                        ),
-                                                        html.Li(
+                                                       html.Li(
                                                             [
                                                                 "Source: ",
                                                                 html.A(
@@ -330,6 +358,15 @@ app.layout = html.Div(
                                                                 html.A(
                                                                     "https://github.com/MarioAvolio/Amazon-Fine-Foods-reviews-Transformers-Text-Classification",
                                                                     href="https://github.com/MarioAvolio/Amazon-Fine-Foods-reviews-Transformers-Text-Classification",
+                                                                ),
+                                                            ]
+                                                        ),
+                                                        html.Li(
+                                                            [
+                                                                "Transformer Dashboard HuggingFace: ",
+                                                                html.A(
+                                                                    "https://huggingface.co/MarioAvolio99/distilbert-base-uncased-finetuned-amazon-fine-food-lite",
+                                                                    href="https://huggingface.co/MarioAvolio99/distilbert-base-uncased-finetuned-amazon-fine-food-lite",
                                                                 ),
                                                             ]
                                                         ),
